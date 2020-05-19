@@ -20,6 +20,12 @@ func openInodes(d disk.Disk) []*inode {
 	return inodes
 }
 
+func deleteInodeBlocks(numInodes uint64, free map[uint64]unit) {
+	for i := uint64(0); i < numInodes; i++ {
+		delete(free, i)
+	}
+}
+
 func OpenDir(d disk.Disk, free map[uint64]unit) *Dir {
 	inodes := openInodes(d)
 	for _, i := range inodes {
@@ -27,6 +33,7 @@ func OpenDir(d disk.Disk, free map[uint64]unit) *Dir {
 			delete(free, a)
 		}
 	}
+	deleteInodeBlocks(NumInodes, free)
 	allocator := newAllocator(free)
 	return &Dir{
 		d:         d,
@@ -38,6 +45,11 @@ func OpenDir(d disk.Disk, free map[uint64]unit) *Dir {
 func (d *Dir) Read(ino uint64, off uint64) disk.Block {
 	i := d.inodes[ino]
 	return i.Read(off)
+}
+
+func (d *Dir) Size(ino uint64) uint64 {
+	i := d.inodes[ino]
+	return i.Size()
 }
 
 func (d *Dir) Append(ino uint64, b disk.Block) bool {
