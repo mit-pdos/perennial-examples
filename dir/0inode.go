@@ -32,8 +32,10 @@ func (i *inode) UsedBlocks() []uint64 {
 func (i *inode) Read(off uint64) disk.Block {
 	i.m.Lock()
 	a := i.addrs[off]
-	b := i.d.Read(a)
 	i.m.Unlock()
+	// TODO: can we prove this optimization that unlocks early? It means all
+	// disk operations happen lock-free.
+	b := i.d.Read(a)
 	return b
 }
 
