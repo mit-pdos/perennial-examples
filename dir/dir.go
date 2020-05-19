@@ -9,11 +9,11 @@ const NumInodes uint64 = 5
 type Dir struct {
 	d         disk.Disk
 	allocator *allocator
-	inodes    []inode
+	inodes    []*inode
 }
 
-func openInodes(d disk.Disk) []inode {
-	var inodes []inode
+func openInodes(d disk.Disk) []*inode {
+	var inodes []*inode
 	for addr := uint64(0); addr < NumInodes; addr++ {
 		inodes = append(inodes, openInode(d, addr))
 	}
@@ -45,7 +45,7 @@ func (d *Dir) Append(ino uint64, b disk.Block) bool {
 	if !ok {
 		return false
 	}
-	disk.Write(a, b)
+	d.d.Write(a, b)
 	d.inodes[ino].Append(a)
 	return true
 }
