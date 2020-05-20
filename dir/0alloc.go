@@ -14,7 +14,8 @@ type allocator struct {
 
 func FreeRange(start, sz uint64) map[uint64]unit {
 	m := make(map[uint64]unit)
-	for i := start; i < start+sz; i++ {
+	end := start + sz
+	for i := start; i < end; i++ {
 		m[i] = unit{}
 	}
 	return m
