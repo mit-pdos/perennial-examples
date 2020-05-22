@@ -53,6 +53,14 @@ func (i *inode) Size() uint64 {
 	return sz
 }
 
+func (i *inode) mkHdr() disk.Block {
+	enc := marshal.NewEnc(disk.BlockSize)
+	enc.PutInt(uint64(len(i.addrs)))
+	enc.PutInts(i.addrs)
+	hdr := enc.Finish()
+	return hdr
+}
+
 // Append adds a block to the inode.
 //
 // Takes ownership of the disk at a.
@@ -65,10 +73,7 @@ func (i *inode) Append(a uint64) bool {
 		return false
 	}
 	i.addrs = append(i.addrs, a)
-	enc := marshal.NewEnc(disk.BlockSize)
-	enc.PutInt(uint64(len(i.addrs)))
-	enc.PutInts(i.addrs)
-	hdr := enc.Finish()
+	hdr := i.mkHdr()
 	i.d.Write(i.addr, hdr)
 	i.m.Unlock()
 	return true
