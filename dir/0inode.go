@@ -7,6 +7,9 @@ import (
 	"github.com/tchajed/marshal"
 )
 
+// Maximum size of inode, in blocks.
+const InodeMaxBlocks uint64 = 511
+
 type inode struct {
 	d     disk.Disk
 	m     *sync.Mutex
@@ -50,8 +53,17 @@ func (i *inode) Size() uint64 {
 	return sz
 }
 
-func (i *inode) Append(a uint64) {
+// Append adds a block to the inode.
+//
+// Takes ownership of the disk at a.
+//
+// Returns false if Append fails (due to running out of space in the inode)
+func (i *inode) Append(a uint64) bool {
 	i.m.Lock()
+	if uint64(len(i.addrs)) >= InodeMaxBlocks {
+		i.m.Unlock()
+		return false
+	}
 	i.addrs = append(i.addrs, a)
 	enc := marshal.NewEnc(disk.BlockSize)
 	enc.PutInt(uint64(len(i.addrs)))
@@ -59,4 +71,5 @@ func (i *inode) Append(a uint64) {
 	hdr := enc.Finish()
 	i.d.Write(i.addr, hdr)
 	i.m.Unlock()
+	return true
 }

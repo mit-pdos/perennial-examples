@@ -58,6 +58,9 @@ func (d *Dir) Append(ino uint64, b disk.Block) bool {
 		return false
 	}
 	d.d.Write(a, b)
-	d.inodes[ino].Append(a)
+	ok2 := d.inodes[ino].Append(a)
+	if !ok2 {
+		return false
+	}
 	return true
 }
