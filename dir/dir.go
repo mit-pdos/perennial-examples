@@ -1,6 +1,7 @@
 package dir
 
 import (
+	"github.com/mit-pdos/perennial-examples/inode"
 	"github.com/tchajed/goose/machine/disk"
 )
 
@@ -9,13 +10,13 @@ const NumInodes uint64 = 5
 type Dir struct {
 	d         disk.Disk
 	allocator *allocator
-	inodes    []*inode
+	inodes    []*inode.Inode
 }
 
-func openInodes(d disk.Disk) []*inode {
-	var inodes []*inode
+func openInodes(d disk.Disk) []*inode.Inode {
+	var inodes []*inode.Inode
 	for addr := uint64(0); addr < NumInodes; addr++ {
-		inodes = append(inodes, openInode(d, addr))
+		inodes = append(inodes, inode.Open(d, addr))
 	}
 	return inodes
 }
