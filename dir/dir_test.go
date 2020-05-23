@@ -3,33 +3,10 @@ package dir
 import (
 	"testing"
 
+	"github.com/mit-pdos/perennial-examples/alloc"
 	"github.com/stretchr/testify/assert"
 	"github.com/tchajed/goose/machine/disk"
 )
-
-func TestAllocatorReservationUnique(t *testing.T) {
-	assert := assert.New(t)
-	free := FreeRange(5, 10)
-	alloc := newAllocator(free)
-	a1, ok := alloc.Reserve()
-	assert.GreaterOrEqual(a1, uint64(5), "allocated address %d should be in range", a1)
-	assert.True(ok)
-	a2, ok := alloc.Reserve()
-	assert.True(ok)
-	assert.NotEqual(a1, a2, "reserved same block twice")
-}
-
-func TestAllocatorAll(t *testing.T) {
-	assert := assert.New(t)
-	free := FreeRange(5, 10)
-	alloc := newAllocator(free)
-	for i := 0; i < 10; i++ {
-		_, ok := alloc.Reserve()
-		assert.True(ok, "reservation failed early: %d", i)
-	}
-	_, ok := alloc.Reserve()
-	assert.False(ok, "all addresses should be allocatd")
-}
 
 func makeBlock(x byte) disk.Block {
 	b := make(disk.Block, disk.BlockSize)
@@ -42,7 +19,7 @@ func TestDirAppendRead(t *testing.T) {
 	theDisk := disk.NewMemDisk(100)
 	// note that we supply [0,5) as blocks, but dir will correctly avoid
 	// allocating them
-	blocks := FreeRange(0, 100)
+	blocks := alloc.FreeRange(0, 100)
 	dir := OpenDir(theDisk, blocks)
 	assert.Equal(uint64(0), dir.Size(1))
 	dir.Append(1, makeBlock(1))
@@ -57,12 +34,12 @@ func TestDirAppendRead(t *testing.T) {
 func TestDirRecover(t *testing.T) {
 	assert := assert.New(t)
 	theDisk := disk.NewMemDisk(NumInodes + 3)
-	dir := OpenDir(theDisk, FreeRange(0, theDisk.Size()))
+	dir := OpenDir(theDisk, alloc.FreeRange(0, theDisk.Size()))
 	ok := dir.Append(1, makeBlock(1))
 	assert.True(ok, "append should succeed")
 	dir.Append(1, makeBlock(2))
 
-	dir = OpenDir(theDisk, FreeRange(0, theDisk.Size()))
+	dir = OpenDir(theDisk, alloc.FreeRange(0, theDisk.Size()))
 	dir.Append(2, makeBlock(3))
 	assert.Equal(makeBlock(1), dir.Read(1, 0))
 	assert.Equal(makeBlock(2), dir.Read(1, 1))
@@ -72,11 +49,11 @@ func TestDirRecover(t *testing.T) {
 func TestDirRecoverFull(t *testing.T) {
 	assert := assert.New(t)
 	theDisk := disk.NewMemDisk(NumInodes + 2)
-	dir := OpenDir(theDisk, FreeRange(0, theDisk.Size()))
+	dir := OpenDir(theDisk, alloc.FreeRange(0, theDisk.Size()))
 	dir.Append(1, makeBlock(1))
 	dir.Append(1, makeBlock(2))
 
-	dir = OpenDir(theDisk, FreeRange(0, theDisk.Size()))
+	dir = OpenDir(theDisk, alloc.FreeRange(0, theDisk.Size()))
 	ok := dir.Append(2, makeBlock(3))
 	assert.False(ok, "should be no space to add more blocks")
 }

@@ -1,19 +1,21 @@
-package dir
+package alloc
 
 import "sync"
 
 type unit struct{}
 
-// allocator manages free disk blocks. It does not store its state durably, so
+type AddrSet = map[uint64]unit
+
+// Allocator manages free disk blocks. It does not store its state durably, so
 // the caller is responsible for returning its set of free disk blocks on
 // recovery.
-type allocator struct {
+type Allocator struct {
 	m    *sync.Mutex
 	free map[uint64]unit
 }
 
-func FreeRange(start, sz uint64) map[uint64]unit {
-	m := make(map[uint64]unit)
+func FreeRange(start, sz uint64) AddrSet {
+	m := make(AddrSet)
 	end := start + sz
 	for i := start; i < end; i++ {
 		m[i] = unit{}
@@ -21,8 +23,8 @@ func FreeRange(start, sz uint64) map[uint64]unit {
 	return m
 }
 
-func newAllocator(free map[uint64]unit) *allocator {
-	return &allocator{m: new(sync.Mutex), free: free}
+func New(free AddrSet) *Allocator {
+	return &Allocator{m: new(sync.Mutex), free: free}
 }
 
 func findKey(m map[uint64]unit) (uint64, bool) {
@@ -38,8 +40,8 @@ func findKey(m map[uint64]unit) (uint64, bool) {
 	return found, ok
 }
 
-// Reserve transfers ownership of a free block from the allocator to the caller
-func (a *allocator) Reserve() (uint64, bool) {
+// Reserve transfers ownership of a free block from the Allocator to the caller
+func (a *Allocator) Reserve() (uint64, bool) {
 	a.m.Lock()
 	k, ok := findKey(a.free)
 	delete(a.free, k)

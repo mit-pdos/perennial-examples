@@ -1,6 +1,7 @@
 package dir
 
 import (
+	"github.com/mit-pdos/perennial-examples/alloc"
 	"github.com/mit-pdos/perennial-examples/inode"
 	"github.com/tchajed/goose/machine/disk"
 )
@@ -9,7 +10,7 @@ const NumInodes uint64 = 5
 
 type Dir struct {
 	d         disk.Disk
-	allocator *allocator
+	allocator *alloc.Allocator
 	inodes    []*inode.Inode
 }
 
@@ -21,13 +22,13 @@ func openInodes(d disk.Disk) []*inode.Inode {
 	return inodes
 }
 
-func deleteInodeBlocks(numInodes uint64, free map[uint64]unit) {
+func deleteInodeBlocks(numInodes uint64, free alloc.AddrSet) {
 	for i := uint64(0); i < numInodes; i++ {
 		delete(free, i)
 	}
 }
 
-func OpenDir(d disk.Disk, free map[uint64]unit) *Dir {
+func OpenDir(d disk.Disk, free alloc.AddrSet) *Dir {
 	inodes := openInodes(d)
 	for _, i := range inodes {
 		for _, a := range i.UsedBlocks() {
@@ -35,7 +36,7 @@ func OpenDir(d disk.Disk, free map[uint64]unit) *Dir {
 		}
 	}
 	deleteInodeBlocks(NumInodes, free)
-	allocator := newAllocator(free)
+	allocator := alloc.New(free)
 	return &Dir{
 		d:         d,
 		allocator: allocator,
