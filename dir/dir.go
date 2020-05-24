@@ -22,21 +22,13 @@ func openInodes(d disk.Disk) []*inode.Inode {
 	return inodes
 }
 
-func deleteInodeBlocks(numInodes uint64, free alloc.AddrSet) {
-	for i := uint64(0); i < numInodes; i++ {
-		delete(free, i)
-	}
-}
-
-func OpenDir(d disk.Disk, free alloc.AddrSet) *Dir {
+func OpenDir(d disk.Disk, sz uint64) *Dir {
 	inodes := openInodes(d)
+	used := make(alloc.AddrSet)
 	for _, i := range inodes {
-		for _, a := range i.UsedBlocks() {
-			delete(free, a)
-		}
+		alloc.SetAdd(used, i.UsedBlocks())
 	}
-	deleteInodeBlocks(NumInodes, free)
-	allocator := alloc.New(free)
+	allocator := alloc.New(NumInodes, sz-NumInodes, used)
 	return &Dir{
 		d:         d,
 		allocator: allocator,

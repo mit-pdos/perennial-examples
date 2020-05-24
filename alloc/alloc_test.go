@@ -8,8 +8,7 @@ import (
 
 func TestAllocatorReservationUnique(t *testing.T) {
 	assert := assert.New(t)
-	free := FreeRange(5, 10)
-	alloc := New(free)
+	alloc := New(5, 10, AddrSet{})
 	a1, ok := alloc.Reserve()
 	assert.GreaterOrEqual(a1, uint64(5), "allocated address %d should be in range", a1)
 	assert.True(ok)
@@ -20,8 +19,7 @@ func TestAllocatorReservationUnique(t *testing.T) {
 
 func TestAllocatorAll(t *testing.T) {
 	assert := assert.New(t)
-	free := FreeRange(5, 10)
-	alloc := New(free)
+	alloc := New(5, 10, AddrSet{})
 	for i := 0; i < 10; i++ {
 		_, ok := alloc.Reserve()
 		assert.True(ok, "reservation failed early: %d", i)
