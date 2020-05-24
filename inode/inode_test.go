@@ -18,7 +18,7 @@ func TestInodeAppendRead(t *testing.T) {
 	d := disk.NewMemDisk(10)
 	i := Open(d, 0)
 	d.Write(7, makeBlock(1))
-	assert.True(i.Append(7), "should be enough space for append")
+	assert.Equal(AppendOk, i.Append(7), "should be enough space for append")
 	d.Write(6, makeBlock(2))
 	i.Append(6)
 	assert.Equal(makeBlock(1), i.Read(0))
@@ -30,9 +30,12 @@ func TestInodeAppendFill(t *testing.T) {
 	d := disk.NewMemDisk(1000)
 	ino := Open(d, 0)
 	for i := uint64(0); i < MaxBlocks; i++ {
-		assert.True(ino.Append(1+i), "should be enough space for InodeMaxBlocks")
+		assert.Equal(AppendOk,
+			ino.Append(1+i),
+			"should be enough space for InodeMaxBlocks")
 	}
-	assert.False(ino.Append(1+MaxBlocks),
+	assert.Equal(AppendFull,
+		ino.Append(1+MaxBlocks),
 		"should not allow appending past InodeMaxBlocks")
 }
 

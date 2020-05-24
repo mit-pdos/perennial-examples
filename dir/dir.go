@@ -61,7 +61,9 @@ func (d *Dir) Append(ino uint64, b disk.Block) bool {
 	}
 	d.d.Write(a, b)
 	ok2 := d.inodes[ino].Append(a)
-	if !ok2 {
+	// TODO: handle allocation
+	// if ok2 == inode.AppendAgain {}
+	if ok2 != inode.AppendOk {
 		return false
 	}
 	return true

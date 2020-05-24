@@ -61,20 +61,39 @@ func (i *Inode) mkHdr() disk.Block {
 	return hdr
 }
 
+type AppendStatus byte
+
+const (
+	AppendOk    AppendStatus = 0
+	AppendAgain AppendStatus = 1
+	AppendFull  AppendStatus = 2
+)
+
 // Append adds a block to the inode.
 //
-// Takes ownership of the disk at a.
+// Takes ownership of the disk at a on success.
 //
-// Returns false if Append fails (due to running out of space in the inode)
-func (i *Inode) Append(a uint64) bool {
+// Returns:
+// - AppendOk on success and takes ownership of the allocated block.
+// - AppendFull if inode is out of space (and returns the allocated block)
+// - AppendAgain if inode needs a metadata block. Call i.Alloc and try again.
+// 	 Returns the allocated block.
+func (i *Inode) Append(a uint64) AppendStatus {
 	i.m.Lock()
 	if uint64(len(i.addrs)) >= MaxBlocks {
 		i.m.Unlock()
-		return false
+		return AppendFull
 	}
 	i.addrs = append(i.addrs, a)
 	hdr := i.mkHdr()
 	i.d.Write(i.addr, hdr)
 	i.m.Unlock()
-	return true
+	return AppendOk
+}
+
+// Give a block to the inode for metadata purposes.
+//
+// Returns true if the block was consumed.
+func (i *Inode) Alloc(a uint64) bool {
+	return false
 }
