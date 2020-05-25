@@ -72,7 +72,8 @@ func prepIndirect(addrs []uint64) disk.Block {
 }
 
 func (i *Inode) UsedBlocks() []uint64 {
-	addrs := make([]uint64, 0)
+	var addrs []uint64
+	addrs = make([]uint64, 0)
 	i.m.Lock()
 	direct := i.direct
 	indirect := i.indirect
