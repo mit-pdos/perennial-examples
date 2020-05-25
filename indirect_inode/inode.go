@@ -19,10 +19,10 @@ import (
 // note that a "direct block" means the address of a block of data
 
 // Maximum size of inode, in blocks.
-const MaxBlocks uint64 = 500 + 11*512
+const MaxBlocks uint64 = 500 + 10*512
 
 const maxDirect uint64 = 500
-const maxIndirect uint64 = 11
+const maxIndirect uint64 = 10
 const indirectNumBlocks uint64 = 512
 
 type Inode struct {
@@ -65,6 +65,12 @@ func readIndirect(d disk.Disk, a uint64) []uint64 {
 	return dec.GetInts(indirectNumBlocks)
 }
 
+func prepIndirect(addrs []uint64) disk.Block {
+	enc := marshal.NewEnc(disk.BlockSize)
+	enc.PutInts(addrs)
+	return enc.Finish()
+}
+
 func (i *Inode) UsedBlocks() []uint64 {
 	addrs := make([]uint64, 0)
 	i.m.Lock()
@@ -74,8 +80,9 @@ func (i *Inode) UsedBlocks() []uint64 {
 	for _, a := range direct {
 		addrs = append(addrs, a)
 	}
-	for _, a := range indirect {
-		addrs = append(addrs, a)
+	for _, blkAddr := range indirect {
+		addrs = append(addrs, blkAddr)
+		addrs = append(addrs, readIndirect(i.d, blkAddr)...)
 	}
 	return addrs
 }
@@ -140,6 +147,11 @@ const (
 	AppendFull  AppendStatus = 2
 )
 
+func (i *Inode) inSize() {
+	hdr := i.mkHdr()
+	i.d.Write(i.addr, hdr)
+}
+
 // Append adds a block to the inode.
 //
 // Takes ownership of the disk at a on success.
@@ -151,20 +163,55 @@ const (
 // 	 Returns the allocated block.
 func (i *Inode) Append(a uint64) AppendStatus {
 	i.m.Lock()
-	if uint64(len(i.direct)) >= maxDirect {
+
+	if i.size >= MaxBlocks {
 		i.m.Unlock()
 		return AppendFull
 	}
-	i.direct = append(i.direct, a)
+
+	if uint64(len(i.direct)) < maxDirect {
+		i.direct = append(i.direct, a)
+		i.size += 1
+		hdr := i.mkHdr()
+		i.d.Write(i.addr, hdr)
+		i.m.Unlock()
+		return AppendOk
+	}
+
+	if indNum(i.size) < uint64(len(i.indirect)) {
+		indAddr := i.indirect[indNum(i.size)]
+		addrs := readIndirect(i.d, indAddr)
+		addrs[indOff(i.size)] = a
+		diskBlk := prepIndirect(addrs)
+		i.d.Write(indAddr, diskBlk)
+
+		i.size += 1
+		hdr := i.mkHdr()
+		i.d.Write(i.addr, hdr)
+		i.m.Unlock()
+		return AppendOk
+	}
+
+	i.indirect = append(i.indirect, a)
 	hdr := i.mkHdr()
 	i.d.Write(i.addr, hdr)
 	i.m.Unlock()
-	return AppendOk
+	return AppendAgain
 }
 
 // Give a block to the inode for metadata purposes.
+// Precondition: Block at addr a should be zeroed
 //
 // Returns true if the block was consumed.
 func (i *Inode) Alloc(a uint64) bool {
-	return false
+	i.m.Lock()
+	if uint64(len(i.indirect)) >= maxIndirect {
+		i.m.Unlock()
+		return false
+	}
+	i.indirect = append(i.indirect, a)
+	hdr := i.mkHdr()
+	i.d.Write(i.addr, hdr)
+	i.m.Unlock()
+	return true
 }
