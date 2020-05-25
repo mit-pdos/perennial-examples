@@ -14,7 +14,7 @@ type Allocator struct {
 	free map[uint64]unit
 }
 
-func FreeRange(start, sz uint64) AddrSet {
+func freeRange(start, sz uint64) AddrSet {
 	m := make(AddrSet)
 	end := start + sz
 	for i := start; i < end; i++ {
@@ -23,7 +23,27 @@ func FreeRange(start, sz uint64) AddrSet {
 	return m
 }
 
-func New(free AddrSet) *Allocator {
+// mapRemove deletes addresses in remove from m
+//
+// like m -= remove
+func mapRemove(m AddrSet, remove AddrSet) {
+	for k := range remove {
+		delete(m, k)
+	}
+}
+
+// SetAdd adds addresses in add to m
+//
+// like m += add
+func SetAdd(m AddrSet, add []uint64) {
+	for _, k := range add {
+		m[k] = unit{}
+	}
+}
+
+func New(start, sz uint64, used AddrSet) *Allocator {
+	free := freeRange(start, sz)
+	mapRemove(free, used)
 	return &Allocator{m: new(sync.Mutex), free: free}
 }
 
