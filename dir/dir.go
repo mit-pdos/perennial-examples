@@ -46,17 +46,46 @@ func (d *Dir) Size(ino uint64) uint64 {
 	return i.Size()
 }
 
+func (d *Dir) finishAppend(ino uint64, a uint64) bool {
+	var ok = false
+	for {
+		status := d.inodes[ino].Append(a)
+		if status == inode.AppendOk {
+			ok = true
+			break // return true
+		}
+		if status == inode.AppendFull {
+			break // return false
+		}
+		if status == inode.AppendAgain {
+			metaAddr, allocOk := d.allocator.Reserve()
+			if !allocOk {
+				break // return false
+			}
+			ok := d.inodes[ino].Alloc(metaAddr)
+			if !ok {
+				// TODO: in this branch, we've reserved a block but cannot
+				//  allocate it to the inode, so it will leak
+				//  (will it get recovered on crash? do we need to give it
+				//  back to the allocator?)
+				break // return false
+			}
+			// allocated a metadata block, try again
+			continue // recurse
+		}
+		// unreachable
+		// XXX: can't use panic because we need this continue and panic makes
+		// go vet fail
+		continue
+	}
+	return ok
+}
+
 func (d *Dir) Append(ino uint64, b disk.Block) bool {
 	a, ok := d.allocator.Reserve()
 	if !ok {
 		return false
 	}
 	d.d.Write(a, b)
-	ok2 := d.inodes[ino].Append(a)
-	// TODO: handle allocation
-	// if ok2 == inode.AppendAgain {}
-	if ok2 != inode.AppendOk {
-		return false
-	}
-	return true
+	return d.finishAppend(ino, a)
 }
