@@ -68,3 +68,9 @@ func (a *Allocator) Reserve() (uint64, bool) {
 	a.m.Unlock()
 	return k, ok
 }
+
+func (a *Allocator) Free(addr uint64) {
+	a.m.Lock()
+	a.free[addr] = unit{}
+	a.m.Unlock()
+}
