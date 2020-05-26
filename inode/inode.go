@@ -25,11 +25,11 @@ func Open(d disk.Disk, addr uint64) *Inode {
 	return &Inode{d: d, m: new(sync.Mutex), addr: addr, addrs: addrs}
 }
 
+// UsedBlocks returns the addresses allocated to the inode for the purposes
+// of recovery. Assumes full ownership of the inode, so does not lock,
+// and expects the caller to need only temporary access to the returned slice.
 func (i *Inode) UsedBlocks() []uint64 {
-	i.m.Lock()
-	addrs := i.addrs
-	i.m.Unlock()
-	return addrs
+	return i.addrs
 }
 
 func (i *Inode) Read(off uint64) disk.Block {
