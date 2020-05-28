@@ -33,10 +33,12 @@ func TestDirRecover(t *testing.T) {
 	dir := OpenDir(theDisk, theDisk.Size())
 	ok := dir.Append(1, makeBlock(1))
 	assert.True(ok, "append should succeed")
-	dir.Append(1, makeBlock(2))
+	assert.True(dir.Append(1, makeBlock(2)),
+		"append should succeed")
 
 	dir = OpenDir(theDisk, theDisk.Size())
-	dir.Append(2, makeBlock(3))
+	assert.True(dir.Append(2, makeBlock(3)),
+		"append of last block should succeed")
 	assert.Equal(makeBlock(1), dir.Read(1, 0))
 	assert.Equal(makeBlock(2), dir.Read(1, 1))
 	assert.Equal(makeBlock(3), dir.Read(2, 0))

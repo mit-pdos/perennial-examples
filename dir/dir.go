@@ -47,16 +47,6 @@ func (d *Dir) Size(ino uint64) uint64 {
 }
 
 func (d *Dir) Append(ino uint64, b disk.Block) bool {
-	a, ok := d.allocator.Reserve()
-	if !ok {
-		return false
-	}
-	d.d.Write(a, b)
-	ok2 := d.inodes[ino].Append(a)
-	// TODO: handle allocation
-	// if ok2 == inode.AppendAgain {}
-	if ok2 != inode.AppendOk {
-		return false
-	}
-	return true
+	i := d.inodes[ino]
+	return i.Append(b, d.allocator)
 }
