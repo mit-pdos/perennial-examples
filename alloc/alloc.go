@@ -1,6 +1,10 @@
 package alloc
 
-import "sync"
+import (
+        "sync"
+
+        "github.com/tchajed/goose/machine"
+)
 
 type unit struct{}
 
@@ -65,6 +69,7 @@ func (a *Allocator) Reserve() (uint64, bool) {
 	a.m.Lock()
 	k, ok := findKey(a.free)
 	delete(a.free, k)
+	machine.Linearize()
 	a.m.Unlock()
 	return k, ok
 }
