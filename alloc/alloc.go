@@ -77,5 +77,6 @@ func (a *Allocator) Reserve() (uint64, bool) {
 func (a *Allocator) Free(addr uint64) {
 	a.m.Lock()
 	a.free[addr] = unit{}
+	machine.Linearize()
 	a.m.Unlock()
 }
