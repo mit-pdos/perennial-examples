@@ -11,7 +11,7 @@ import (
 	"github.com/tchajed/goose/machine/disk"
 )
 
-const MaxSize uint64 = 511
+const maxLogSize uint64 = 511
 
 type update struct {
 	addr uint64
@@ -57,7 +57,7 @@ func writeAll(d disk.Disk, upds []update, off uint64) {
 
 func (app *appender) Append(upds []update) bool {
 	sz := uint64(len(app.addrs))
-	if sz+uint64(len(upds)) > MaxSize {
+	if sz+uint64(len(upds)) > maxLogSize {
 		return false
 	}
 	writeAll(app.d, upds, 1+sz)
