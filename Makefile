@@ -1,5 +1,6 @@
 all: check
 
 check:
-	test -z $$(gofmt -d .)
+	@gofmt -d .
+	test -z "$$(gofmt -d .)"
 	go vet ./...
