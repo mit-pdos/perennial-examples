@@ -4,10 +4,24 @@ import "github.com/tchajed/goose/machine/disk"
 
 func install(d disk.Disk, txn []update) {
 	for _, u := range txn {
-		// TODO: for lock-free reads to work,
-		//  need to absorb the logged group txn
 		d.Write(u.addr, u.b)
 	}
+}
+
+func absorb(txn []update) []update {
+	addrs := make(map[uint64]uint64)
+	var absorbed []update
+	for _, u := range txn {
+		i, ok := addrs[u.addr]
+		if ok {
+			absorbed[i].b = u.b
+		} else {
+			newIndex := uint64(len(absorbed))
+			addrs[u.addr] = newIndex
+			absorbed = append(absorbed, u)
+		}
+	}
+	return absorbed
 }
 
 // logOne takes the current pending transaction and logs and installs it
@@ -20,14 +34,17 @@ func (l *Log) logAndInstallOne(app *appender) {
 	}
 	l.m.Unlock()
 
-	app.Append(txn)
-	// now txn is durable
-	install(l.d, txn)
+	absorbed := absorb(txn)
+	app.Append(absorbed)
+	// now txn (via absorbed) is durable
+	install(l.d, absorbed)
 	app.Reset()
 	// and now it's fully installed
 
 	l.m.Lock()
 	// note that there might be new pending transactions which we missed
+	// NOTE: diskEnd does not measure physical number of updates in log; do
+	//  we really need it? can it be a transaction count?
 	l.diskEnd = l.diskEnd + uint64(len(txn))
 	l.pending = l.pending[len(txn):]
 	// once we unlock, then other threads will know that txn is durable

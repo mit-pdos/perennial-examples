@@ -28,11 +28,34 @@ func (l *Log) Open(d disk.Disk) *Log {
 	return l
 }
 
-func (l *Log) Write(upds []update) {
+// waitForSpaceAndLock waits until the log has space for numUpdates
+//
+// Requires numUpdates < maxLogSpace both to avoid int overflow and also for
+// progress (there will never be space otherwise).
+//
+// Acquires the lock in the process.
+//
+// Looks exactly like a lock acquire with an extra pure postcondition that
+// there is space in the log.
+func (l *Log) waitForSpaceAndLock(numUpdates uint64) {
 	l.m.Lock()
-	if uint64(len(l.pending))+uint64(len(upds)) > maxLogSize {
-		// TODO: wait for space
+	for {
+		if uint64(len(l.pending))+numUpdates <= maxLogSize {
+			break
+		}
+		l.m.Unlock()
+		l.m.Lock()
+		continue
 	}
+	// establishes len(l.pending) + numUpdates <= maxLogSize
+	return
+}
+
+func (l *Log) Write(upds []update) bool {
+	if uint64(len(upds)) > maxLogSize {
+		return false
+	}
+	l.waitForSpaceAndLock(uint64(len(upds)))
 	l.pending = append(l.pending, upds...)
 	txnId := l.diskEnd + uint64(len(l.pending))
 	l.m.Unlock()
@@ -48,6 +71,7 @@ func (l *Log) Write(upds []update) {
 		l.m.Unlock()
 		l.m.Lock()
 	}
+	return true
 }
 
 func (l *Log) Read(a uint64) disk.Block {
