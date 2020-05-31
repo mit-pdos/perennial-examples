@@ -1,9 +1,9 @@
 package alloc
 
 import (
-        "sync"
+	"sync"
 
-        "github.com/tchajed/goose/machine"
+	"github.com/tchajed/goose/machine"
 )
 
 type unit struct{}
