@@ -15,15 +15,15 @@ type Log struct {
 	pending []update
 }
 
-func (l *Log) open(d disk.Disk) (*Log, *appender) {
+func open(d disk.Disk) (*Log, *appender) {
 	m := new(sync.Mutex)
 	app, upds := openAppender(d)
-	install(l.d, upds)
+	install(d, upds)
 	return &Log{d: d, m: m, diskEnd: 0, pending: []update{}}, app
 }
 
-func (l *Log) Open(d disk.Disk) *Log {
-	l, app := l.open(d)
+func Open(d disk.Disk) *Log {
+	l, app := open(d)
 	go func() { l.logger(app) }()
 	return l
 }
@@ -51,15 +51,18 @@ func (l *Log) waitForSpaceAndLock(numUpdates uint64) {
 	return
 }
 
-func (l *Log) Write(upds []update) bool {
+func (l *Log) writePrepare(upds []update) (uint64, bool) {
 	if uint64(len(upds)) > maxLogSize {
-		return false
+		return 0, false
 	}
 	l.waitForSpaceAndLock(uint64(len(upds)))
 	l.pending = append(l.pending, upds...)
 	txnId := l.diskEnd + uint64(len(l.pending))
 	l.m.Unlock()
+	return txnId, true
+}
 
+func (l *Log) writeWait(txnId uint64) {
 	l.m.Lock()
 	for {
 		if l.diskEnd >= txnId {
@@ -71,12 +74,17 @@ func (l *Log) Write(upds []update) bool {
 		l.m.Unlock()
 		l.m.Lock()
 	}
+}
+
+func (l *Log) Write(upds []update) bool {
+	txnId, ok := l.writePrepare(upds)
+	if !ok {
+		return false
+	}
+	l.writeWait(txnId)
 	return true
 }
 
 func (l *Log) Read(a uint64) disk.Block {
-	l.m.Lock()
-	b := l.d.Read(a)
-	l.m.Unlock()
-	return b
+	return l.d.Read(a)
 }

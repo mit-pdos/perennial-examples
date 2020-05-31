@@ -3,6 +3,14 @@ package wal
 import "github.com/tchajed/goose/machine/disk"
 
 func install(d disk.Disk, txn []update) {
+	// TODO: we need threads to either not observe these writes or see them
+	//  all atomically. Not observing them is hard,
+	//  since we don't have the old values.
+	//  Committing them requires that we atomically write the header and
+	//  cause threads to start reading from the wal,
+	//  which we can do with a reverse search in the wal.
+	//  This means we should prepare the wal, _lock_,
+	//  and then write the header, which breaks the atomic_append API.
 	for _, u := range txn {
 		d.Write(u.addr, u.b)
 	}
