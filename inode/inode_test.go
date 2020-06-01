@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tchajed/goose/machine/disk"
+
+	"github.com/mit-pdos/perennial-examples/alloc"
 )
 
 func makeBlock(x byte) disk.Block {
@@ -16,11 +18,11 @@ func makeBlock(x byte) disk.Block {
 func TestInodeAppendRead(t *testing.T) {
 	assert := assert.New(t)
 	d := disk.NewMemDisk(10)
+	allocator := alloc.New(3, 4, alloc.AddrSet{})
 	i := Open(d, 0)
-	d.Write(7, makeBlock(1))
-	assert.Equal(AppendOk, i.Append(7), "should be enough space for append")
-	d.Write(6, makeBlock(2))
-	i.Append(6)
+	assert.Equal(true, i.Append(makeBlock(1), allocator),
+		"should be enough space for append")
+	i.Append(makeBlock(2), allocator)
 	assert.Equal(makeBlock(1), i.Read(0))
 	assert.Equal(makeBlock(2), i.Read(1))
 }
@@ -28,27 +30,27 @@ func TestInodeAppendRead(t *testing.T) {
 func TestInodeAppendFill(t *testing.T) {
 	assert := assert.New(t)
 	d := disk.NewMemDisk(1000)
+	allocator := alloc.New(1, 999, alloc.AddrSet{})
 	ino := Open(d, 0)
 	for i := uint64(0); i < MaxBlocks; i++ {
-		assert.Equal(AppendOk,
-			ino.Append(1+i),
+		assert.Equal(true,
+			ino.Append(makeBlock(byte(i)), allocator),
 			"should be enough space for InodeMaxBlocks")
 	}
-	assert.Equal(AppendFull,
-		ino.Append(1+MaxBlocks),
+	assert.Equal(false,
+		ino.Append(makeBlock(0), allocator),
 		"should not allow appending past InodeMaxBlocks")
 }
 
 func TestInodeRecover(t *testing.T) {
 	assert := assert.New(t)
 	d := disk.NewMemDisk(10)
+	allocator := alloc.New(1, 9, alloc.AddrSet{})
 	i := Open(d, 0)
-	d.Write(7, makeBlock(1))
-	i.Append(7)
-	d.Write(6, makeBlock(2))
-	i.Append(6)
+	i.Append(makeBlock(1), allocator)
+	i.Append(makeBlock(2), allocator)
 	i = Open(d, 0)
 	assert.Equal(makeBlock(1), i.Read(0))
 	assert.Equal(makeBlock(2), i.Read(1))
-	assert.Equal([]uint64{7, 6}, i.UsedBlocks())
+	assert.Len(i.UsedBlocks(), 2)
 }

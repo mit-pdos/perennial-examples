@@ -5,15 +5,20 @@ import (
 
 	"github.com/tchajed/goose/machine/disk"
 	"github.com/tchajed/marshal"
+
+	"github.com/mit-pdos/perennial-examples/alloc"
 )
 
 // Maximum size of inode, in blocks.
 const MaxBlocks uint64 = 511
 
 type Inode struct {
-	d     disk.Disk
-	m     *sync.Mutex
-	addr  uint64   // address on disk where inode is stored
+	// read-only
+	d    disk.Disk
+	m    *sync.Mutex
+	addr uint64 // address on disk where inode is stored
+
+	// mutable
 	addrs []uint64 // addresses of data blocks
 }
 
@@ -22,7 +27,12 @@ func Open(d disk.Disk, addr uint64) *Inode {
 	dec := marshal.NewDec(b)
 	numAddrs := dec.GetInt()
 	addrs := dec.GetInts(numAddrs)
-	return &Inode{d: d, m: new(sync.Mutex), addr: addr, addrs: addrs}
+	return &Inode{
+		d:     d,
+		m:     new(sync.Mutex),
+		addr:  addr,
+		addrs: addrs,
+	}
 }
 
 // UsedBlocks returns the addresses allocated to the inode for the purposes
@@ -61,39 +71,28 @@ func (i *Inode) mkHdr() disk.Block {
 	return hdr
 }
 
-type AppendStatus byte
-
-const (
-	AppendOk    AppendStatus = 0
-	AppendAgain AppendStatus = 1
-	AppendFull  AppendStatus = 2
-)
-
 // Append adds a block to the inode.
 //
-// Takes ownership of the disk at a on success.
-//
-// Returns:
-// - AppendOk on success and takes ownership of the allocated block.
-// - AppendFull if inode is out of space (and returns the allocated block)
-// - AppendAgain if inode needs a metadata block. Call i.Alloc and try again.
-// 	 Returns the allocated block.
-func (i *Inode) Append(a uint64) AppendStatus {
+// Returns false on failure (if the allocator or inode are out of space)
+func (i *Inode) Append(b disk.Block, allocator *alloc.Allocator) bool {
+	// allocate lock-free
+	a, ok := allocator.Reserve()
+	if !ok {
+		return false
+	}
+	// prepare lock-free
+	i.d.Write(a, b)
+
 	i.m.Lock()
 	if uint64(len(i.addrs)) >= MaxBlocks {
+		allocator.Free(a)
 		i.m.Unlock()
-		return AppendFull
+		return false
 	}
+
 	i.addrs = append(i.addrs, a)
 	hdr := i.mkHdr()
 	i.d.Write(i.addr, hdr)
 	i.m.Unlock()
-	return AppendOk
-}
-
-// Give a block to the inode for metadata purposes.
-//
-// Returns true if the block was consumed.
-func (i *Inode) Alloc(a uint64) bool {
-	return false
+	return true
 }
