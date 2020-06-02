@@ -24,6 +24,19 @@ independent.
 Note that the code doesn't literally separate these into Go packages (for our
 convenience, though maybe we should).
 
+## replicated block
+
+Toy example that replicates a single logical disk block across two blocks. Reads
+can pick which replica to use, while writes update both. For consistency, we
+lock the disk addresses and recovery by syncing. This requires a crash lock, and
+its crash invariant allows the addresses to be out-of-sync.
+
+This is a modular proof that can be instantiated by the caller for multiple
+addresses, building a replicated disk out of tiny pieces.
+
+Note that this finally takes the 6.826 example and makes it horizontally
+modular, vertically composable, concurrent, and written in Go.
+
 ## append-only log
 
 (needs to be moved from Goose repo to here)
