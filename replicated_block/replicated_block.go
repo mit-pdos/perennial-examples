@@ -47,9 +47,13 @@ func (rb *RepBlock) Read(primary bool) disk.Block {
 	return b
 }
 
-func (rb *RepBlock) Write(b disk.Block) {
-	rb.m.Lock()
+func (rb *RepBlock) write(b disk.Block) {
 	rb.d.Write(rb.addr, b)
 	rb.d.Write(rb.addr+1, b)
+}
+
+func (rb *RepBlock) Write(b disk.Block) {
+	rb.m.Lock()
+	rb.write(b)
 	rb.m.Unlock()
 }
