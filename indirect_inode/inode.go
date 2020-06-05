@@ -45,10 +45,10 @@ func Open(d disk.Disk, addr uint64) *Inode {
 	b := d.Read(addr)
 	dec := marshal.NewDec(b)
 	size := dec.GetInt()
-	numDirect := min(size, maxDirect)
 	direct := dec.GetInts(maxDirect)
-	numIndirect := dec.GetInt()
 	indirect := dec.GetInts(maxIndirect)
+	numIndirect := dec.GetInt()
+	numDirect := min(size, maxDirect)
 	return &Inode{
 		d:        d,
 		m:        new(sync.Mutex),
