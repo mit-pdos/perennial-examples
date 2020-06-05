@@ -72,6 +72,26 @@ func (i *Inode) mkHdr() disk.Block {
 	return hdr
 }
 
+// append adds address a (and whatever data is stored there) to the inode
+//
+// Requires the lock to be held.
+//
+// In this simple design with only direct blocks, appending never requires
+// internal allocation, so we don't take an allocator.
+//
+// This method can only fail due to running out of space in the inode. In this
+// case, append returns ownership of the allocated block.
+func (i *Inode) append(a uint64) bool {
+	if uint64(len(i.addrs)) >= MaxBlocks {
+		return false
+	}
+
+	i.addrs = append(i.addrs, a)
+	hdr := i.mkHdr()
+	i.d.Write(i.addr, hdr)
+	return true
+}
+
 // Append adds a block to the inode.
 //
 // Returns false on failure (if the allocator or inode are out of space)
@@ -85,15 +105,10 @@ func (i *Inode) Append(b disk.Block, allocator *alloc.Allocator) bool {
 	i.d.Write(a, b)
 
 	i.m.Lock()
-	if uint64(len(i.addrs)) >= MaxBlocks {
-		allocator.Free(a)
-		i.m.Unlock()
-		return false
-	}
-
-	i.addrs = append(i.addrs, a)
-	hdr := i.mkHdr()
-	i.d.Write(i.addr, hdr)
+	ok2 := i.append(a)
 	i.m.Unlock()
-	return true
+	if !ok2 {
+		allocator.Free(a)
+	}
+	return ok2
 }
