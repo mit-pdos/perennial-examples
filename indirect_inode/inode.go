@@ -129,13 +129,17 @@ func padInts(enc marshal.Enc, num uint64) {
 
 func (i *Inode) mkHdr() disk.Block {
 	enc := marshal.NewEnc(disk.BlockSize)
+	// sz
 	enc.PutInt(i.size)
-	direct := i.direct
-	enc.PutInts(direct)
-	padInts(enc, maxDirect-uint64(len(direct)))
-	enc.PutInt(uint64(len(i.indirect)))
+	// direct_s
+	enc.PutInts(i.direct)
+	padInts(enc, maxDirect-uint64(len(i.direct)))
+	// indirect_s
 	enc.PutInts(i.indirect)
 	padInts(enc, maxIndirect-uint64(len(i.indirect)))
+	// numIndirect
+	enc.PutInt(uint64(len(i.indirect)))
+
 	hdr := enc.Finish()
 	return hdr
 }
