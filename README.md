@@ -20,6 +20,8 @@ manage it (it does not restore the allocator, and shares it).
 * The [inode](inode/) is a durable, append-only structure. It calls into an
   allocator which is shared among all the inodes.
 * The [directory](dir/) composes multiple inodes and an allocator.
+* The [single-inode package](single_inode/) is a simple client of the inode; as
+  an alternative to the directory, it only has a single inode.
 
 ## replicated block
 
