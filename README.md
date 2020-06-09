@@ -11,20 +11,20 @@ block, update it with full ownership, and then atomically install. However,
 while updating we still have a crash obligation to the allocator.
 
 Illustrates modularity. We're able to structure this into three components: an
-allocator, an inode, and a directory. The allocator an inode are completely
-independent.
+allocator, an inode, and a directory. The inode uses the allocator but does not
+manage it (it does not restore the allocator, and shares it).
 
-* The allocator is an in-memory structure that serializes access to the free
+* The [allocator](alloc/) is an in-memory structure that serializes access to the free
   space. It has to be restored during recovery by figuring out what has been
   allocated.
-* The inode is a durable, append-only structure. It requires the caller to
-  prepare and supply disk blocks to append.
-* The directory composes multiple inodes and an allocator.
-
-Note that the code doesn't literally separate these into Go packages (for our
-convenience, though maybe we should).
+* The [inode](inode/) is a durable, append-only structure. It calls into an
+  allocator which is shared among all the inodes.
+* The [directory](dir/) composes multiple inodes and an allocator.
 
 ## replicated block
+
+Self-contained example at [replicated_block](replicated_block/). Intended to
+resemble the Perennial replicated disk example.
 
 Toy example that replicates a single logical disk block across two blocks. Reads
 can pick which replica to use, while writes update both. For consistency, we
