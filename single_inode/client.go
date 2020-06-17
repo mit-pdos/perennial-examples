@@ -14,11 +14,14 @@ type SingleInode struct {
 	alloc *alloc.Allocator
 }
 
-func Open(d disk.Disk) *SingleInode {
+// Restore the SingleInode from disk
+//
+// sz should be the size of the disk to use
+func Open(d disk.Disk, sz uint64) *SingleInode {
 	i := inode.Open(d, 0)
 	used := make(alloc.AddrSet)
 	alloc.SetAdd(used, i.UsedBlocks())
-	allocator := alloc.New(1, d.Size()-1, used)
+	allocator := alloc.New(1, sz-1, used)
 	return &SingleInode{i: i, alloc: allocator}
 }
 
