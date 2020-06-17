@@ -174,7 +174,7 @@ func (i *Inode) Append(a uint64) AppendStatus {
 		return AppendFull
 	}
 
-	if uint64(len(i.direct)) < maxDirect {
+	if i.size < maxDirect {
 		i.direct = append(i.direct, a)
 		i.size += 1
 		hdr := i.mkHdr()
