@@ -65,6 +65,8 @@ func findKey(m map[uint64]unit) (uint64, bool) {
 }
 
 // Reserve transfers ownership of a free block from the Allocator to the caller
+//
+// The initial contents of the block are arbitrary.
 func (a *Allocator) Reserve() (uint64, bool) {
 	a.m.Lock()
 	k, ok := findKey(a.free)
