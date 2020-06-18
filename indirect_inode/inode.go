@@ -190,7 +190,7 @@ func (i *Inode) Append(b disk.Block, allocator *alloc.Allocator) bool {
 	} else {
 		// we need to allocate a new indirect block
 		// and put the data there
-		indAddr, ok = allocator.Reserve()
+		indAddr, ok := allocator.Reserve()
 		if !ok {
 			i.m.Unlock()
 			return false
