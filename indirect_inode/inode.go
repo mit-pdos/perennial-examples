@@ -3,6 +3,7 @@ package inode
 import (
 	"sync"
 
+	"github.com/mit-pdos/perennial-examples/alloc"
 	"github.com/tchajed/goose/machine/disk"
 	"github.com/tchajed/marshal"
 )
@@ -144,14 +145,6 @@ func (i *Inode) mkHdr() disk.Block {
 	return hdr
 }
 
-type AppendStatus byte
-
-const (
-	AppendOk    AppendStatus = 0
-	AppendAgain AppendStatus = 1
-	AppendFull  AppendStatus = 2
-)
-
 func (i *Inode) inSize() {
 	hdr := i.mkHdr()
 	i.d.Write(i.addr, hdr)
@@ -161,17 +154,21 @@ func (i *Inode) inSize() {
 //
 // Takes ownership of the disk at a on success.
 //
-// Returns:
-// - AppendOk on success and takes ownership of the allocated block.
-// - AppendFull if inode is out of space (and returns the allocated block)
-// - AppendAgain if inode needs a metadata block. Call i.Alloc and try again.
-// 	 Returns the allocated block.
-func (i *Inode) Append(a uint64) AppendStatus {
+// Returns false on failure (if the allocator or inode are out of space)
+func (i *Inode) Append(b disk.Block, allocator *alloc.Allocator) bool {
+	a, ok := allocator.Reserve()
+	if !ok {
+		return false
+	}
+
+	// prepare lock-free
+	i.d.Write(a, b)
+
 	i.m.Lock()
 
 	if i.size >= MaxBlocks {
 		i.m.Unlock()
-		return AppendFull
+		return false
 	}
 
 	if i.size < maxDirect {
@@ -180,28 +177,33 @@ func (i *Inode) Append(a uint64) AppendStatus {
 		hdr := i.mkHdr()
 		i.d.Write(i.addr, hdr)
 		i.m.Unlock()
-		return AppendOk
+		return true
 	}
 
+	var diskBlk disk.Block
+	var indAddr uint64
 	if indNum(i.size) < uint64(len(i.indirect)) {
-		indAddr := i.indirect[indNum(i.size)]
+		indAddr = i.indirect[indNum(i.size)]
 		addrs := readIndirect(i.d, indAddr)
 		addrs[indOff(i.size)] = a
-		diskBlk := prepIndirect(addrs)
-		i.d.Write(indAddr, diskBlk)
-
-		i.size += 1
-		hdr := i.mkHdr()
-		i.d.Write(i.addr, hdr)
-		i.m.Unlock()
-		return AppendOk
+		diskBlk = prepIndirect(addrs)
+	} else {
+		// we need to allocate a new indirect block
+		// and put the data there
+		indAddr, ok = allocator.Reserve()
+		if !ok {
+			i.m.Unlock()
+			return false
+		}
+		i.indirect = append(i.indirect, indAddr)
+		diskBlk = prepIndirect([]uint64{a})
 	}
-
-	i.indirect = append(i.indirect, a)
+	i.d.Write(indAddr, diskBlk)
+	i.size += 1
 	hdr := i.mkHdr()
 	i.d.Write(i.addr, hdr)
 	i.m.Unlock()
-	return AppendAgain
+	return true
 }
 
 // Give a block to the inode for metadata purposes.
