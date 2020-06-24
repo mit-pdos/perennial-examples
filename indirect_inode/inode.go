@@ -80,8 +80,12 @@ func (i *Inode) UsedBlocks() []uint64 {
 	for _, a := range direct {
 		addrs = append(addrs, a)
 	}
+	// append all addrs pointing to indirect blocks
 	for _, blkAddr := range indirect {
 		addrs = append(addrs, blkAddr)
+	}
+	// append all addrs inside indirect blocks pointing to blocks
+	for _, blkAddr := range indirect {
 		addrs = append(addrs, readIndirect(i.d, blkAddr)...)
 	}
 	return addrs
