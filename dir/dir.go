@@ -22,7 +22,7 @@ func openInodes(d disk.Disk) []*inode.Inode {
 	return inodes
 }
 
-func OpenDir(d disk.Disk, sz uint64) *Dir {
+func Open(d disk.Disk, sz uint64) *Dir {
 	inodes := openInodes(d)
 	used := make(alloc.AddrSet)
 	for _, i := range inodes {

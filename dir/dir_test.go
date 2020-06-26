@@ -16,7 +16,7 @@ func makeBlock(x byte) disk.Block {
 func TestDirAppendRead(t *testing.T) {
 	assert := assert.New(t)
 	theDisk := disk.NewMemDisk(100)
-	dir := OpenDir(theDisk, theDisk.Size())
+	dir := Open(theDisk, theDisk.Size())
 	assert.Equal(uint64(0), dir.Size(1))
 	dir.Append(1, makeBlock(1))
 	dir.Append(1, makeBlock(2))
@@ -30,13 +30,13 @@ func TestDirAppendRead(t *testing.T) {
 func TestDirRecover(t *testing.T) {
 	assert := assert.New(t)
 	theDisk := disk.NewMemDisk(NumInodes + 3)
-	dir := OpenDir(theDisk, theDisk.Size())
+	dir := Open(theDisk, theDisk.Size())
 	ok := dir.Append(1, makeBlock(1))
 	assert.True(ok, "append should succeed")
 	assert.True(dir.Append(1, makeBlock(2)),
 		"append should succeed")
 
-	dir = OpenDir(theDisk, theDisk.Size())
+	dir = Open(theDisk, theDisk.Size())
 	assert.True(dir.Append(2, makeBlock(3)),
 		"append of last block should succeed")
 	assert.Equal(makeBlock(1), dir.Read(1, 0))
@@ -47,11 +47,11 @@ func TestDirRecover(t *testing.T) {
 func TestDirRecoverFull(t *testing.T) {
 	assert := assert.New(t)
 	theDisk := disk.NewMemDisk(NumInodes + 2)
-	dir := OpenDir(theDisk, theDisk.Size())
+	dir := Open(theDisk, theDisk.Size())
 	dir.Append(1, makeBlock(1))
 	dir.Append(1, makeBlock(2))
 
-	dir = OpenDir(theDisk, theDisk.Size())
+	dir = Open(theDisk, theDisk.Size())
 	ok := dir.Append(2, makeBlock(3))
 	assert.False(ok, "should be no space to add more blocks")
 }
