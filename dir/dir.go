@@ -22,12 +22,17 @@ func openInodes(d disk.Disk) []*inode.Inode {
 	return inodes
 }
 
-func Open(d disk.Disk, sz uint64) *Dir {
-	inodes := openInodes(d)
+func inodeUsedBlocks(inodes []*inode.Inode) alloc.AddrSet {
 	used := make(alloc.AddrSet)
 	for _, i := range inodes {
 		alloc.SetAdd(used, i.UsedBlocks())
 	}
+	return used
+}
+
+func Open(d disk.Disk, sz uint64) *Dir {
+	inodes := openInodes(d)
+	used := inodeUsedBlocks(inodes)
 	allocator := alloc.New(NumInodes, sz-NumInodes, used)
 	return &Dir{
 		d:         d,
