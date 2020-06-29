@@ -183,6 +183,18 @@ func (i *Inode) appendDirect(a uint64) bool {
 	return false
 }
 
+// writeIndirect preps the block of addrs and
+// adds writes the new indirect block to disk
+//
+// Requires the lock to be held.
+func (i *Inode) writeIndirect(indAddr uint64, addrs []uint64) {
+	diskBlk := prepIndirect(addrs)
+	i.d.Write(indAddr, diskBlk)
+	i.size += 1
+	hdr := i.mkHdr()
+	i.d.Write(i.addr, hdr)
+}
+
 // appendIndirect adds address a (and whatever data is stored there) to the inode
 //
 // Requires the lock to be held.
@@ -201,18 +213,6 @@ func (i *Inode) appendIndirect(a uint64) bool {
 	addrs[indOff(i.size)] = a
 	i.writeIndirect(indAddr, addrs)
 	return true
-}
-
-// writeIndirect preps the block of addrs and
-// adds writes the new indirect block to disk
-//
-// Requires the lock to be held.
-func (i *Inode) writeIndirect(indAddr uint64, addrs []uint64) {
-	diskBlk := prepIndirect(addrs)
-	i.d.Write(indAddr, diskBlk)
-	i.size += 1
-	hdr := i.mkHdr()
-	i.d.Write(i.addr, hdr)
 }
 
 // Append adds a block to the inode.
