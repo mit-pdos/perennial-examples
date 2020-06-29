@@ -163,7 +163,7 @@ func (i *Inode) checkTotalSize() bool {
 	return true
 }
 
-// append adds address a (and whatever data is stored there) to the inode
+// appendDirect adds address a (and whatever data is stored there) to the inode
 //
 // Requires the lock to be held.
 //
@@ -183,28 +183,58 @@ func (i *Inode) appendDirect(a uint64) bool {
 	return false
 }
 
+// appendIndirect adds address a (and whatever data is stored there) to the inode
+//
+// Requires the lock to be held.
+//
+// In this simple design with only direct blocks, appending never requires
+// internal allocation, so we don't take an allocator.
+//
+// This method can only fail due to running out of space in the inode. In this
+// case, append returns ownership of the allocated block.
+func (i *Inode) appendIndirect(a uint64) bool {
+	if indNum(i.size) >= uint64(len(i.indirect)) {
+		return false
+	}
+	indAddr := i.indirect[indNum(i.size)]
+	addrs := readIndirect(i.d, indAddr)
+	addrs[indOff(i.size)] = a
+	i.writeIndirect(indAddr, addrs)
+	return true
+}
+
+// writeIndirect preps the block of addrs and
+// adds writes the new indirect block to disk
+//
+// Requires the lock to be held.
+func (i *Inode) writeIndirect(indAddr uint64, addrs []uint64) {
+	diskBlk := prepIndirect(addrs)
+	i.d.Write(indAddr, diskBlk)
+	i.size += 1
+	hdr := i.mkHdr()
+	i.d.Write(i.addr, hdr)
+}
+
 // Append adds a block to the inode.
 //
 // Takes ownership of the disk at a on success.
 //
 // Returns false on failure (if the allocator or inode are out of space)
 func (i *Inode) Append(b disk.Block, allocator *alloc.Allocator) bool {
-	a, ok := allocator.Reserve()
-	if !ok {
-		return false
-	}
-
-	// prepare lock-free
-	i.d.Write(a, b)
-
 	i.m.Lock()
 
-	ok2 := i.checkTotalSize()
-	if !ok2 {
+	ok := i.checkTotalSize()
+	if !ok {
 		i.m.Unlock()
-		allocator.Free(a)
 		return false
 	}
+
+	a, ok2 := allocator.Reserve()
+	if !ok2 {
+		i.m.Unlock()
+		return false
+	}
+	i.d.Write(a, b)
 
 	ok3 := i.appendDirect(a)
 	if ok3 {
@@ -212,29 +242,23 @@ func (i *Inode) Append(b disk.Block, allocator *alloc.Allocator) bool {
 		return true
 	}
 
-	var diskBlk disk.Block
-	var indAddr uint64
-	if indNum(i.size) < uint64(len(i.indirect)) {
-		indAddr = i.indirect[indNum(i.size)]
-		addrs := readIndirect(i.d, indAddr)
-		addrs[indOff(i.size)] = a
-		diskBlk = prepIndirect(addrs)
-	} else {
-		// we need to allocate a new indirect block
-		// and put the data there
-		indAddr, ok := allocator.Reserve()
-		if !ok {
-			i.m.Unlock()
-			allocator.Free(a)
-			return false
-		}
-		i.indirect = append(i.indirect, indAddr)
-		diskBlk = prepIndirect([]uint64{a})
+	ok4 := i.appendIndirect(a)
+	if ok4 {
+		i.m.Unlock()
+		return true
 	}
-	i.d.Write(indAddr, diskBlk)
-	i.size += 1
-	hdr := i.mkHdr()
-	i.d.Write(i.addr, hdr)
+
+	// we need to allocate a new indirect block
+	// and put the data there
+	indAddr, ok := allocator.Reserve()
+	if !ok {
+		i.m.Unlock()
+		allocator.Free(a)
+		return false
+	}
+
+	i.indirect = append(i.indirect, indAddr)
+	i.writeIndirect(indAddr, []uint64{a})
 	i.m.Unlock()
 	return true
 }
