@@ -163,15 +163,11 @@ func (i *Inode) checkTotalSize() bool {
 	return true
 }
 
-// appendDirect adds address a (and whatever data is stored there) to the inode
+// appendDirect attempts to append the block stored at a without allocating new metadata blocks.
 //
 // Requires the lock to be held.
 //
-// In this simple design with only direct blocks, appending never requires
-// internal allocation, so we don't take an allocator.
-//
-// This method can only fail due to running out of space in the inode. In this
-// case, append returns ownership of the allocated block.
+// Fails when the inode does not have direct block space.
 func (i *Inode) appendDirect(a uint64) bool {
 	if i.size < maxDirect {
 		i.direct = append(i.direct, a)
@@ -184,7 +180,7 @@ func (i *Inode) appendDirect(a uint64) bool {
 }
 
 // writeIndirect preps the block of addrs and
-// adds writes the new indirect block to disk
+// adds the new indirect block to the inode on disk
 //
 // Requires the lock to be held.
 func (i *Inode) writeIndirect(indAddr uint64, addrs []uint64) {
@@ -195,15 +191,13 @@ func (i *Inode) writeIndirect(indAddr uint64, addrs []uint64) {
 	i.d.Write(i.addr, hdr)
 }
 
-// appendIndirect adds address a (and whatever data is stored there) to the inode
+// appendIndirect adds address a (and whatever data is stored there) to the
+// inode using space in an existing indirect block, without allocation
 //
 // Requires the lock to be held.
 //
-// In this simple design with only direct blocks, appending never requires
-// internal allocation, so we don't take an allocator.
-//
-// This method can only fail due to running out of space in the inode. In this
-// case, append returns ownership of the allocated block.
+// Assumes there is no direct block space left, but can fail if the last
+// indirect block is full.
 func (i *Inode) appendIndirect(a uint64) bool {
 	if indNum(i.size) >= uint64(len(i.indirect)) {
 		return false
@@ -216,8 +210,6 @@ func (i *Inode) appendIndirect(a uint64) bool {
 }
 
 // Append adds a block to the inode.
-//
-// Takes ownership of the disk at a on success.
 //
 // Returns false on failure (if the allocator or inode are out of space)
 func (i *Inode) Append(b disk.Block, allocator *alloc.Allocator) bool {
@@ -259,23 +251,6 @@ func (i *Inode) Append(b disk.Block, allocator *alloc.Allocator) bool {
 
 	i.indirect = append(i.indirect, indAddr)
 	i.writeIndirect(indAddr, []uint64{a})
-	i.m.Unlock()
-	return true
-}
-
-// Give a block to the inode for metadata purposes.
-// Precondition: Block at addr a should be zeroed
-//
-// Returns true if the block was consumed.
-func (i *Inode) Alloc(a uint64) bool {
-	i.m.Lock()
-	if uint64(len(i.indirect)) >= maxIndirect {
-		i.m.Unlock()
-		return false
-	}
-	i.indirect = append(i.indirect, a)
-	hdr := i.mkHdr()
-	i.d.Write(i.addr, hdr)
 	i.m.Unlock()
 	return true
 }
