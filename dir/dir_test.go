@@ -15,7 +15,7 @@ func makeBlock(x byte) disk.Block {
 
 func TestDirAppendRead(t *testing.T) {
 	assert := assert.New(t)
-	theDisk := disk.NewMemDisk(100)
+	theDisk := disk.NewMemDisk(NumInodes + 100)
 	dir := Open(theDisk, theDisk.Size())
 	assert.Equal(uint64(0), dir.Size(1))
 	dir.Append(1, makeBlock(1))
