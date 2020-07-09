@@ -39,17 +39,7 @@ addresses, building a replicated disk out of tiny pieces.
 Note that this finally takes the 6.826 example and makes it horizontally
 modular, vertically composable, concurrent, and written in Go.
 
-## append-only log
+## toy example
 
-(needs to be moved from Goose repo to here)
-
-Implements atomically appending blocks to a log using a header block.
-
-## circular buffer
-
-(needs to be re-implemented)
-
-Similar to the append-only log, but supports concurrent logging and installation
-using a circular on-disk structure. More realistically than the append-only log,
-the only read operation is recovery, since the caller is expected to be managing
-a cache anyway.
+A fragment of code to illustrate transferring a disk block from one thread to
+another with a crash invariant.
