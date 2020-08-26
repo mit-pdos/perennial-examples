@@ -91,6 +91,25 @@ func (d *Dir) Create() (uint64, bool) {
 	return a, true
 }
 
+func (d *Dir) delete(ino uint64) {
+	i := d.inodes[ino]
+	delete(d.inodes, ino)
+	d.writeHdr() // crash commit point
+	// now we can free all the used addresses for other threads to use
+	// (somewhat optional - restarting the system would also free these
+	// addresses)
+	d.allocator.Free(ino)
+	for _, inode_a := range i.UsedBlocks() {
+		d.allocator.Free(inode_a)
+	}
+}
+
+func (d *Dir) Delete(ino uint64) {
+	d.m.Lock()
+	d.delete(ino)
+	d.m.Unlock()
+}
+
 func (d *Dir) Read(ino uint64, off uint64) disk.Block {
 	d.m.Lock()
 	i := d.inodes[ino]

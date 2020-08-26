@@ -31,6 +31,28 @@ func TestDirAppendRead(t *testing.T) {
 	assert.Equal(uint64(0), dir.Size(ino0))
 }
 
+func TestDirCreateDelete(t *testing.T) {
+	assert := assert.New(t)
+	theDisk := disk.NewMemDisk(MaxInodes + 100)
+	dir := Open(theDisk, theDisk.Size())
+	ino0, _ := dir.Create()
+	ino1, _ := dir.Create()
+	assert.Equal(uint64(0), dir.Size(ino1))
+	dir.Append(ino1, makeBlock(1))
+	ino2, _ := dir.Create()
+	dir.Append(ino1, makeBlock(2))
+	dir.Append(ino2, makeBlock(3))
+	assert.Equal(uint64(2), dir.Size(ino1))
+	assert.Equal(makeBlock(2), dir.Read(ino1, 1))
+	dir.Delete(ino1)
+	assert.Equal(makeBlock(3), dir.Read(ino2, 0))
+	dir.Delete(ino2)
+	assert.Equal(uint64(0), dir.Size(ino0))
+	ino3, _ := dir.Create()
+	dir.Append(ino3, makeBlock(1))
+	assert.Equal(makeBlock(1), dir.Read(ino3, 0))
+}
+
 func TestDirRecover(t *testing.T) {
 	assert := assert.New(t)
 	theDisk := disk.NewMemDisk(MaxInodes + 3)
