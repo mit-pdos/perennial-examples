@@ -78,44 +78,41 @@ func (i *Inode) mkHdr() disk.Block {
 	return hdr
 }
 
-func reserveMany(allocator *alloc.Allocator, n uint64) ([]uint64, bool) {
-	var failed = false
-	var allocated []uint64
-	for i := uint64(0); i < n; i++ {
-		a, ok := allocator.Reserve()
-		if !ok {
-			failed = true
-			break
-		}
-		allocated = append(allocated, a)
+// flushOne extends the on-disk inode with the next buffered write
+//
+// assumes lock is held and that there is at least one buffered write
+func (i *Inode) flushOne(allocator *alloc.Allocator) bool {
+	a, ok := allocator.Reserve()
+	if !ok {
+		return false
 	}
-	if failed {
-		for _, a := range allocated {
-			allocator.Free(a)
-		}
-		return nil, false
-	}
-	return allocated, true
+	b := i.buffered[0]
+	i.buffered = i.buffered[1:]
+	i.d.Write(a, b)
+	i.appendOne(a)
+	return true
+}
+
+// appendOne durably extends the inode with the data in some address
+func (i *Inode) appendOne(a uint64) {
+	i.addrs = append(i.addrs, a)
+	hdr := i.mkHdr()
+	i.d.Write(i.addr, hdr)
 }
 
 // critical section for Flush
 //
 // assumes lock is held
 func (i *Inode) flush(allocator *alloc.Allocator) bool {
-	addresses, ok := reserveMany(allocator, uint64(len(i.buffered)))
-	if !ok {
+	for len(i.buffered) > 0 {
+		ok := i.flushOne(allocator)
+		if !ok {
+			break
+		}
+	}
+	if len(i.buffered) > 0 {
 		return false
 	}
-	// buffered data is guaranteed to fit by inode invariant (enforced by
-	// append)
-	for j, buf := range i.buffered {
-		a := addresses[j]
-		i.d.Write(a, buf)
-		i.addrs = append(i.addrs, a)
-	}
-	hdr := i.mkHdr()
-	i.d.Write(i.addr, hdr)
-	i.buffered = nil // more realistically would re-use with i.buffered[:0]
 	return true
 }
 
