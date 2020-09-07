@@ -78,6 +78,13 @@ func (i *Inode) mkHdr() disk.Block {
 	return hdr
 }
 
+// appendOne durably extends the inode with the data in some address
+func (i *Inode) appendOne(a uint64) {
+	i.addrs = append(i.addrs, a)
+	hdr := i.mkHdr()
+	i.d.Write(i.addr, hdr)
+}
+
 // flushOne extends the on-disk inode with the next buffered write
 //
 // assumes lock is held and that there is at least one buffered write
@@ -91,13 +98,6 @@ func (i *Inode) flushOne(allocator *alloc.Allocator) bool {
 	i.d.Write(a, b)
 	i.appendOne(a)
 	return true
-}
-
-// appendOne durably extends the inode with the data in some address
-func (i *Inode) appendOne(a uint64) {
-	i.addrs = append(i.addrs, a)
-	hdr := i.mkHdr()
-	i.d.Write(i.addr, hdr)
 }
 
 // critical section for Flush
