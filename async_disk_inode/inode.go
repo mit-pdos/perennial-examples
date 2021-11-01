@@ -96,7 +96,7 @@ func (i *Inode) append(a uint64) bool {
 // Append adds a block to the inode.
 //
 // Returns false on failure (if the allocator or inode are out of space)
-func (i *Inode) Append(b async_disk.Block, allocator *alloc.Alloc) bool {
+func (i *Inode) Append(b async_disk.Block, allocator *async_alloc.Alloc) bool {
 	// allocate lock-free
 	a := allocator.AllocNum()
 	// prepare lock-free

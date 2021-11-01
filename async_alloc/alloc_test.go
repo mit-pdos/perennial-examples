@@ -1,4 +1,4 @@
-package alloc
+package async_alloc
 
 import (
 	"testing"

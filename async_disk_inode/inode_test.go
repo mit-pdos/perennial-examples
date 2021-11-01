@@ -18,7 +18,7 @@ func makeBlock(x byte) async_disk.Block {
 func TestInodeAppendRead(t *testing.T) {
 	assert := assert.New(t)
 	d := async_disk.NewMemDisk(8 * 4096)
-	allocator := alloc.MkAlloc(d, 1)
+	allocator := async_alloc.MkAlloc(d, 1)
 	allocator.MarkUsed(0)
 	allocator.MarkUsed(1)
 	i := Open(d, 0)
@@ -32,7 +32,7 @@ func TestInodeAppendRead(t *testing.T) {
 func TestInodeAppendFill(t *testing.T) {
 	assert := assert.New(t)
 	d := async_disk.NewMemDisk(8 * 4096)
-	allocator := alloc.MkAlloc(d, 1)
+	allocator := async_alloc.MkAlloc(d, 1)
 	allocator.MarkUsed(0)
 	allocator.MarkUsed(1)
 	ino := Open(d, 0)
@@ -49,7 +49,7 @@ func TestInodeAppendFill(t *testing.T) {
 func TestInodeRecover(t *testing.T) {
 	assert := assert.New(t)
 	d := async_disk.NewMemDisk(8 * 4096)
-	allocator := alloc.MkAlloc(d, 1)
+	allocator := async_alloc.MkAlloc(d, 1)
 	allocator.MarkUsed(0)
 	allocator.MarkUsed(1)
 	i := Open(d, 0)
