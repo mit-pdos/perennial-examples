@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tchajed/goose/machine/async_disk"
 
-	"github.com/mit-pdos/perennial-examples/async_alloc"
+	"github.com/mit-pdos/perennial-examples/async_durable_alloc"
 )
 
 func makeBlock(x byte) async_disk.Block {

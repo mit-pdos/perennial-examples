@@ -6,7 +6,7 @@ import (
 	"github.com/tchajed/goose/machine/async_disk"
 	"github.com/tchajed/marshal"
 
-	"github.com/mit-pdos/perennial-examples/async_alloc"
+	"github.com/mit-pdos/perennial-examples/async_durable_alloc"
 )
 
 // Maximum size of inode, in blocks.
