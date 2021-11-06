@@ -1,4 +1,4 @@
-package inode
+package async_mem_alloc_inode
 
 import (
 	"sync"
