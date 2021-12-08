@@ -1,6 +1,6 @@
 # Example programs for Perennial
 
-[![Build Status](https://travis-ci.com/mit-pdos/perennial-examples.svg?branch=master)](https://travis-ci.com/mit-pdos/perennial-examples)
+[![CI](https://github.com/mit-pdos/perennial-examples/actions/workflows/build.yml/badge.svg)](https://github.com/mit-pdos/perennial-examples/actions/workflows/build.yml)
 
 ## dir - single directory
 
@@ -14,13 +14,13 @@ Illustrates modularity. We're able to structure this into three components: an
 allocator, an inode, and a directory. The inode uses the allocator but does not
 manage it (it does not restore the allocator, and shares it).
 
-* The [allocator](alloc/) is an in-memory structure that serializes access to the free
+- The [allocator](alloc/) is an in-memory structure that serializes access to the free
   space. It has to be restored during recovery by figuring out what has been
   allocated.
-* The [inode](inode/) is a durable, append-only structure. It calls into an
+- The [inode](inode/) is a durable, append-only structure. It calls into an
   allocator which is shared among all the inodes.
-* The [directory](dir/) composes multiple inodes and an allocator.
-* The [single-inode package](single_inode/) is a simple client of the inode; as
+- The [directory](dir/) composes multiple inodes and an allocator.
+- The [single-inode package](single_inode/) is a simple client of the inode; as
   an alternative to the directory, it only has a single inode.
 
 ## replicated block
