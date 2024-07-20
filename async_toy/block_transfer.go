@@ -1,6 +1,6 @@
 package toy
 
-import "github.com/goose-lang/goose/machine/async_disk"
+import "github.com/goose-lang/primitive/async_disk"
 
 // assumes a crash invariant with a guarantee that says a has an even block (the
 // initial status doesn't matter); this should be sufficient to prove that this

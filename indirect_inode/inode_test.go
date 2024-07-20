@@ -3,7 +3,7 @@ package inode
 import (
 	"testing"
 
-	"github.com/goose-lang/goose/machine/disk"
+	"github.com/goose-lang/primitive/disk"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mit-pdos/perennial-examples/alloc"

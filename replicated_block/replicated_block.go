@@ -3,7 +3,7 @@ package replicated_block
 import (
 	"sync"
 
-	"github.com/goose-lang/goose/machine/disk"
+	"github.com/goose-lang/primitive/disk"
 )
 
 type RepBlock struct {

@@ -3,7 +3,7 @@ package async_alloc
 import (
 	"testing"
 
-	"github.com/goose-lang/goose/machine/async_disk"
+	"github.com/goose-lang/primitive/async_disk"
 	"github.com/stretchr/testify/assert"
 )
 

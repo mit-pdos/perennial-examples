@@ -3,7 +3,7 @@ package dynamic_dir
 import (
 	"testing"
 
-	"github.com/goose-lang/goose/machine/disk"
+	"github.com/goose-lang/primitive/disk"
 	"github.com/stretchr/testify/assert"
 )
 

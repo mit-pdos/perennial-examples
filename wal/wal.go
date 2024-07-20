@@ -3,7 +3,7 @@ package wal
 import (
 	"sync"
 
-	"github.com/goose-lang/goose/machine/disk"
+	"github.com/goose-lang/primitive/disk"
 )
 
 type Log struct {

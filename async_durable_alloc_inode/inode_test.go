@@ -3,7 +3,7 @@ package inode
 import (
 	"testing"
 
-	"github.com/goose-lang/goose/machine/async_disk"
+	"github.com/goose-lang/primitive/async_disk"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mit-pdos/perennial-examples/async_durable_alloc"

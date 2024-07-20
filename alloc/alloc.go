@@ -3,7 +3,7 @@ package alloc
 import (
 	"sync"
 
-	"github.com/goose-lang/goose/machine"
+	"github.com/goose-lang/primitive"
 )
 
 type unit struct{}
@@ -71,7 +71,7 @@ func (a *Allocator) Reserve() (uint64, bool) {
 	a.m.Lock()
 	k, ok := findKey(a.free)
 	delete(a.free, k)
-	machine.Linearize()
+	primitive.Linearize()
 	a.m.Unlock()
 	return k, ok
 }
@@ -79,6 +79,6 @@ func (a *Allocator) Reserve() (uint64, bool) {
 func (a *Allocator) Free(addr uint64) {
 	a.m.Lock()
 	a.free[addr] = unit{}
-	machine.Linearize()
+	primitive.Linearize()
 	a.m.Unlock()
 }

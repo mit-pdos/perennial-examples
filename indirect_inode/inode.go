@@ -3,7 +3,7 @@ package inode
 import (
 	"sync"
 
-	"github.com/goose-lang/goose/machine/disk"
+	"github.com/goose-lang/primitive/disk"
 	"github.com/mit-pdos/perennial-examples/alloc"
 	"github.com/tchajed/marshal"
 )
