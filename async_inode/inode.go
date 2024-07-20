@@ -3,7 +3,7 @@ package async_inode
 import (
 	"sync"
 
-	"github.com/tchajed/goose/machine/disk"
+	"github.com/goose-lang/goose/machine/disk"
 	"github.com/tchajed/marshal"
 
 	"github.com/mit-pdos/perennial-examples/alloc"

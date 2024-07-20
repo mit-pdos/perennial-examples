@@ -1,6 +1,6 @@
 package wal
 
-import "github.com/tchajed/goose/machine/disk"
+import "github.com/goose-lang/goose/machine/disk"
 
 func install(d disk.Disk, txn []update) {
 	// TODO: we need threads to either not observe these writes or see them

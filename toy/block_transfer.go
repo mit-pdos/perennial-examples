@@ -1,6 +1,6 @@
 package toy
 
-import "github.com/tchajed/goose/machine/disk"
+import "github.com/goose-lang/goose/machine/disk"
 
 // assumes a crash invariant with a guarantee that says a has an even block (the
 // initial status doesn't matter); this should be sufficient to prove that this

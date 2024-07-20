@@ -3,7 +3,7 @@
 package single_inode
 
 import (
-	"github.com/tchajed/goose/machine/disk"
+	"github.com/goose-lang/goose/machine/disk"
 
 	"github.com/mit-pdos/perennial-examples/alloc"
 	"github.com/mit-pdos/perennial-examples/inode"

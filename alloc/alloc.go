@@ -3,7 +3,7 @@ package alloc
 import (
 	"sync"
 
-	"github.com/tchajed/goose/machine"
+	"github.com/goose-lang/goose/machine"
 )
 
 type unit struct{}

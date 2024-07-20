@@ -3,7 +3,7 @@ package async_mem_alloc_inode
 import (
 	"sync"
 
-	"github.com/tchajed/goose/machine/async_disk"
+	"github.com/goose-lang/goose/machine/async_disk"
 	"github.com/tchajed/marshal"
 
 	"github.com/mit-pdos/perennial-examples/alloc"

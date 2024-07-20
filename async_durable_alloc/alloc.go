@@ -3,7 +3,7 @@ package async_alloc
 import (
 	"sync"
 
-	"github.com/tchajed/goose/machine/async_disk"
+	"github.com/goose-lang/goose/machine/async_disk"
 )
 
 // Allocator uses a bit map to allocate and free numbers. Bit 0

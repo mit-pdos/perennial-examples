@@ -3,7 +3,7 @@ package toy
 import (
 	"testing"
 
-	"github.com/tchajed/goose/machine/async_disk"
+	"github.com/goose-lang/goose/machine/async_disk"
 )
 
 func TestTransferBlock(t *testing.T) {
