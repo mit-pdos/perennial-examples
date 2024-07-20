@@ -3,8 +3,8 @@ package dir
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/goose-lang/goose/machine/async_disk"
+	"github.com/stretchr/testify/assert"
 )
 
 func makeBlock(x byte) async_disk.Block {

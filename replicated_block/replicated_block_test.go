@@ -3,8 +3,8 @@ package replicated_block
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/goose-lang/goose/machine/disk"
+	"github.com/stretchr/testify/assert"
 )
 
 func mkBlock(b0 byte) disk.Block {

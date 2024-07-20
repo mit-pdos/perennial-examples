@@ -3,8 +3,8 @@ package inode
 import (
 	"sync"
 
-	"github.com/mit-pdos/perennial-examples/alloc"
 	"github.com/goose-lang/goose/machine/disk"
+	"github.com/mit-pdos/perennial-examples/alloc"
 	"github.com/tchajed/marshal"
 )
 
@@ -155,7 +155,6 @@ func (i *Inode) inSize() {
 // checkTotalSize determines that the inode is not already at maximum size
 //
 // Requires the lock to be held.
-//
 func (i *Inode) checkTotalSize() bool {
 	if i.size >= MaxBlocks {
 		return false

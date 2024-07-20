@@ -1,9 +1,9 @@
 package dir
 
 import (
+	"github.com/goose-lang/goose/machine/async_disk"
 	"github.com/mit-pdos/perennial-examples/alloc"
 	"github.com/mit-pdos/perennial-examples/async_mem_alloc_inode"
-	"github.com/goose-lang/goose/machine/async_disk"
 )
 
 const NumInodes uint64 = 5

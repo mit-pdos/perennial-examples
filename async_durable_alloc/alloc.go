@@ -21,7 +21,6 @@ type Alloc struct {
 }
 
 // MkAlloc initializes with a bitmap.
-//
 func MkAlloc(d async_disk.Disk, addr uint64) *Alloc {
 	bitmap := d.Read(addr)
 	a := &Alloc{

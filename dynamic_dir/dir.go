@@ -3,9 +3,9 @@ package dynamic_dir
 import (
 	"sync"
 
+	"github.com/goose-lang/goose/machine/disk"
 	"github.com/mit-pdos/perennial-examples/alloc"
 	"github.com/mit-pdos/perennial-examples/inode"
-	"github.com/goose-lang/goose/machine/disk"
 	"github.com/tchajed/marshal"
 )
 
@@ -25,7 +25,7 @@ type Dir struct {
 
 func (d *Dir) mkHdr() disk.Block {
 	var inode_addrs []uint64
-	for a, _ := range d.inodes {
+	for a := range d.inodes {
 		inode_addrs = append(inode_addrs, a)
 	}
 	enc := marshal.NewEnc(disk.BlockSize)

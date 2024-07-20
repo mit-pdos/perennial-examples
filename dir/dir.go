@@ -1,9 +1,9 @@
 package dir
 
 import (
+	"github.com/goose-lang/goose/machine/disk"
 	"github.com/mit-pdos/perennial-examples/alloc"
 	"github.com/mit-pdos/perennial-examples/inode"
-	"github.com/goose-lang/goose/machine/disk"
 )
 
 const NumInodes uint64 = 5

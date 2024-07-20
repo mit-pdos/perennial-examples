@@ -3,8 +3,8 @@ package dynamic_dir
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/goose-lang/goose/machine/disk"
+	"github.com/stretchr/testify/assert"
 )
 
 func makeBlock(x byte) disk.Block {

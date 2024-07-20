@@ -3,8 +3,8 @@ package async_inode
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/goose-lang/goose/machine/disk"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/mit-pdos/perennial-examples/alloc"
 )

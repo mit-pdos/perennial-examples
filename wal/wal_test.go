@@ -3,8 +3,8 @@ package wal
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/goose-lang/goose/machine/disk"
+	"github.com/stretchr/testify/assert"
 )
 
 func mkUpdate(addr uint64, b0 byte) update {

@@ -3,8 +3,8 @@ package async_alloc
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/goose-lang/goose/machine/async_disk"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPopCnt(t *testing.T) {
